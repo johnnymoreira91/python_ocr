@@ -1,0 +1,9 @@
+version: '3'
+services:
+  fastapi-app:
+    build:
+      context: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./uploads:/app/uploads  # Mapeia a pasta de uploads para persistir os arquivos
