@@ -1,41 +1,48 @@
 from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image, ImageEnhance, ImageFilter
 import pytesseract
 import io
 
 app = FastAPI()
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"], 
+    allow_headers=["*"], 
+)
+
 def preprocess_image(image: Image.Image) -> Image.Image:
-    # Convertendo para escala de cinza
     image = image.convert('L')
-    # Aumentando o contraste
     enhancer = ImageEnhance.Contrast(image)
     image = enhancer.enhance(2)
-    # Aplicando um filtro de nitidez
     image = image.filter(ImageFilter.SHARPEN)
     return image
 
 def crop_bottom_part(image: Image.Image) -> Image.Image:
-    # Pega as dimensões da imagem
     width, height = image.size
-    # Define a área para cortar (últimos 20% da altura)
     bottom_part = image.crop((0, height * 0.8, width, height))
     return bottom_part
+
+def resize_image(image: Image.Image, width: int) -> Image.Image:
+    aspect_ratio = image.height / image.width
+    new_height = int(width * aspect_ratio)
+    return image.resize((width, new_height), Image.LANCZOS)
 
 @app.post("/image")
 async def extract_text(file: UploadFile = File(...)):
     try:
-        # Carregar a imagem enviada
         image = Image.open(io.BytesIO(await file.read()))
 
-        # Recortar a parte inferior da imagem
         image = crop_bottom_part(image)
 
-        # Pré-processar a imagem
+        image = resize_image(image, 8000)
+
         image = preprocess_image(image)
 
-        # Parâmetros do Tesseract para melhor reconhecimento
         custom_config = r'--oem 3 --psm 6'
         extracted_text = pytesseract.image_to_string(image, lang='por', config=custom_config)
 
