@@ -1,4 +1,4 @@
-#!/home/johnny/Desktop/egb/python/tesseract/venv/bin/python3
+#!/home/johnny/Desktop/egb/python/defImage/venv/bin/python3
 # -*- coding: utf-8 -*-
 import re
 import sys
